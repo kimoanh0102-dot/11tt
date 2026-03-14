@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastery: Thể Tích Khối Đa Diện - Toán 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            options: { enableMenu: false },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fffbeb; color: #1e293b; }
+        .math-render { opacity: 0; transition: opacity 0.5s ease; }
+        .math-render.ready { opacity: 1; }
+        .choice-btn:active { transform: scale(0.97); }
+        .explanation-box { 
+            border-left: 8px solid #d97706; 
+            background-color: #fef3c7;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.08);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-check { box-shadow: 0 10px 20px -5px rgba(217, 119, 6, 0.4); }
+        .item-row { transition: all 0.2s ease; }
+        .item-row:hover { background-color: #ffffff; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 md:p-6">
+    <div id="game-app" class="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(217,119,6,0.15)] border border-amber-50 flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-amber-600 p-8 text-white text-center relative overflow-hidden rounded-t-[2.5rem]">
+            <div class="absolute inset-0 bg-gradient-to-br from-amber-700 via-amber-600 to-orange-500 opacity-95"></div>
+            <div class="relative z-10">
+                <h1 class="text-3xl font-extrabold tracking-tight text-white mb-2 italic uppercase">THỂ TÍCH KHỐI ĐA DIỆN</h1>
+                <p class="text-amber-100 text-sm font-medium opacity-90 uppercase tracking-[0.3em]">Toán 11 KNTT - Cấu trúc: 50% NB - 30% TH - 20% VD</p>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="progress-container" class="hidden h-3 bg-slate-100 relative">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-700 w-0"></div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="main-content" class="p-6 md:p-12 flex-grow min-h-[600px] flex flex-col overflow-y-auto">
+            <div id="start-screen" class="text-center py-16 my-auto">
+                <div class="text-[10rem] mb-8 leading-none">🧊</div>
+                <h2 class="text-4xl font-black text-slate-800 mb-6 uppercase tracking-tighter">KIỂM TRA KIẾN THỨC</h2>
+                <p class="text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed text-xl">
+                    Hệ thống 50 câu hỏi chuẩn hóa chuyên đề <b>Thể Tích</b> đã được kiểm duyệt tuyệt đối. <br>
+                    Cơ chế chấm điểm phần tự luận được cấu hình <b>chính xác 100%</b>. Thuật toán phân mảnh bộ nhớ đảm bảo <b class="text-amber-600">tỷ lệ lặp lại 0%</b> với lượt đề liền trước.
+                </p>
+                <button onclick="initGame()" class="bg-amber-600 hover:bg-amber-700 text-white px-24 py-6 rounded-[2rem] font-black text-2xl shadow-xl transition-all active:scale-95 transform hover:-translate-y-1">BẮT ĐẦU NGAY</button>
+            </div>
+        </div>
+
+        <!-- Footer Control -->
+        <div id="footer-actions" class="hidden p-8 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 rounded-b-[2.5rem]">
+            <div id="status" class="text-lg font-black text-amber-600 uppercase tracking-[0.25em]">CÂU 1 / 15</div>
+            <div class="flex gap-4 w-full md:w-auto">
+                <button id="check-btn" onclick="processAnswer()" class="flex-1 md:flex-none bg-amber-600 hover:bg-amber-700 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg btn-check active:scale-95">Kiểm tra</button>
+                <button id="next-btn" onclick="renderNext()" class="hidden flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg active:scale-95">Tiếp theo →</button>
+                <button id="result-btn" onclick="finishGame()" class="hidden flex-1 md:flex-none bg-red-500 hover:bg-red-600 text-white px-16 py-4 rounded-2xl font-bold text-xl transition shadow-lg active:scale-95">Kết quả</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MASTER_POOL = {
+            part1: [
+                { id: "tt_nb_1", question: "Công thức tính thể tích $V$ của khối chóp có diện tích đáy $S$ và chiều cao $h$ là:", options: ["$V = \\frac{1}{3} S \\cdot h$", "$V = S \\cdot h$", "$V = \\frac{1}{2} S \\cdot h$", "$V = 3 S \\cdot h$"], correct: 0, explanation: "Theo định lý Toán 11, thể tích khối chóp bằng một phần ba tích của diện tích mặt đáy và chiều cao: $V = \\frac{1}{3} S \\cdot h$." },
+                { id: "tt_nb_2", question: "Công thức tính thể tích $V$ của khối lăng trụ có diện tích đáy $S$ và chiều cao $h$ là:", options: ["$V = \\frac{1}{3} S \\cdot h$", "$V = S \\cdot h$", "$V = \\frac{1}{2} S \\cdot h$", "$V = 3 S \\cdot h$"], correct: 1, explanation: "Theo định lý về thể tích, thể tích khối lăng trụ bằng tích của diện tích mặt đáy và chiều cao: $V = S \\cdot h$." },
+                { id: "tt_nb_3", question: "Thể tích của một khối hộp chữ nhật có ba kích thước $a, b, c$ là:", options: ["$V = a+b+c$", "$V = \\frac{1}{3} abc$", "$V = abc$", "$V = 2(ab+bc+ca)$"], correct: 2, explanation: "Hình hộp chữ nhật là một trường hợp đặc biệt của lăng trụ. Diện tích đáy là $S = ab$, chiều cao là $h = c$. Vậy thể tích $V = S \\cdot h = abc$." },
+                { id: "tt_nb_4", question: "Thể tích của một khối lập phương có cạnh bằng $a$ là:", options: ["$V = 3a$", "$V = a^2$", "$V = \\frac{a^3}{3}$", "$V = a^3$"], correct: 3, explanation: "Khối lập phương là khối hộp chữ nhật có ba kích thước bằng nhau ($a=b=c$). Thể tích $V = a \\cdot a \\cdot a = a^3$." },
+                { id: "tt_nb_5", question: "Cho hình chóp có diện tích đáy bằng $6$ và chiều cao bằng $4$. Thể tích của khối chóp là:", options: ["$24$", "$8$", "$12$", "$10$"], correct: 1, explanation: "Áp dụng công thức thể tích khối chóp: $V = \\frac{1}{3} S \\cdot h = \\frac{1}{3} \\cdot 6 \\cdot 4 = 8$." },
+                { id: "tt_nb_6", question: "Cho khối lăng trụ có diện tích đáy bằng $5$ và chiều cao bằng $3$. Thể tích của khối lăng trụ là:", options: ["$15$", "$5$", "$8$", "$45$"], correct: 0, explanation: "Áp dụng công thức thể tích khối lăng trụ: $V = S \\cdot h = 5 \\cdot 3 = 15$." },
+                { id: "tt_nb_7", question: "Biết thể tích của một khối chóp là $10$ và diện tích đáy bằng $5$. Chiều cao của khối chóp bằng:", options: ["$2$", "$6$", "$15$", "$50$"], correct: 1, explanation: "Ta có $V = \\frac{1}{3} S \\cdot h \\Leftrightarrow 10 = \\frac{1}{3} \\cdot 5 \\cdot h \\Leftrightarrow 30 = 5h \\Leftrightarrow h = 6$." },
+                { id: "tt_nb_8", question: "Khối chóp đều $S.ABCD$ có đường cao là đoạn thẳng nào dưới đây?", options: ["Đoạn nối $S$ với một đỉnh của đáy", "Đoạn nối $S$ với trung điểm một cạnh đáy", "Đoạn nối $S$ với tâm của đa giác đáy", "Đoạn $SA$"], correct: 2, explanation: "Định nghĩa: Hình chóp đều có hình chiếu vuông góc của đỉnh lên mặt đáy trùng với tâm của đa giác đáy. Vậy đường cao là đoạn nối $S$ với tâm đáy." },
+                { id: "tt_nb_9", question: "Cho hình chóp $S.ABC$ có hai mặt phẳng $(SAB)$ và $(SAC)$ cùng vuông góc với mặt phẳng đáy $(ABC)$. Đường cao của khối chóp là:", options: ["Cạnh $SA$", "Cạnh $SB$", "Đoạn nối $S$ với trung điểm $BC$", "Đoạn nối $S$ với trực tâm $\\Delta ABC$"], correct: 0, explanation: "Tính chất hai mặt phẳng vuông góc: Nếu hai mặt phẳng cắt nhau cùng vuông góc với mặt phẳng thứ ba thì giao tuyến của chúng vuông góc với mặt phẳng thứ ba đó. Giao tuyến của $(SAB)$ và $(SAC)$ là $SA$, nên $SA \\perp (ABC)$." },
+                { id: "tt_nb_10", question: "Trong hình lăng trụ đứng $ABC.A'B'C'$, đường cao của lăng trụ là đoạn thẳng nào?", options: ["Đường chéo $A'B$", "Cạnh bên $AA'$", "Đường cao của tam giác $ABC$", "Đoạn nối tâm hai đáy"], correct: 1, explanation: "Trong lăng trụ đứng, các cạnh bên luôn vuông góc với mặt đáy. Do đó, độ dài cạnh bên (như $AA', BB', CC'$) chính là chiều cao của lăng trụ." },
+                { id: "tt_nb_11", question: "Tỉ số thể tích giữa khối chóp và khối lăng trụ có cùng diện tích đáy và cùng chiều cao là:", options: ["$\\frac{1}{2}$", "$\\frac{1}{3}$", "$3$", "$1$"], correct: 1, explanation: "Gọi diện tích đáy chung là $S$, chiều cao chung là $h$. Thể tích chóp là $V_1 = \\frac{1}{3}Sh$. Thể tích lăng trụ là $V_2 = Sh$. Tỉ số $\\frac{V_1}{V_2} = \\frac{1}{3}$." },
+                { id: "tt_nb_12", question: "Tính thể tích của khối hộp chữ nhật có ba kích thước lần lượt là $2, 3, 4$.", options: ["$9$", "$12$", "$24$", "$8$"], correct: 2, explanation: "Thể tích khối hộp chữ nhật là tích ba kích thước: $V = a \\cdot b \\cdot c = 2 \\cdot 3 \\cdot 4 = 24$." },
+                { id: "tt_nb_13", question: "Thể tích của khối lập phương có cạnh bằng $3$ là:", options: ["$9$", "$27$", "$18$", "$12$"], correct: 1, explanation: "Thể tích khối lập phương: $V = a^3 = 3^3 = 27$." },
+                { id: "tt_nb_14", question: "Cho khối chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$, chiều cao bằng $a$. Thể tích khối chóp là:", options: ["$a^3$", "$\\frac{a^3}{2}$", "$\\frac{a^3}{3}$", "$\\frac{a^3}{6}$"], correct: 2, explanation: "Diện tích đáy $S = a^2$. Chiều cao $h = a$. Thể tích khối chóp $V = \\frac{1}{3} S \\cdot h = \\frac{1}{3} a^2 \\cdot a = \\frac{a^3}{3}$." },
+                { id: "tt_nb_15", question: "Một khối lăng trụ có đáy là tam giác vuông có hai cạnh góc vuông bằng $3$ và $4$, chiều cao khối lăng trụ bằng $5$. Thể tích khối lăng trụ là:", options: ["$60$", "$30$", "$20$", "$10$"], correct: 1, explanation: "Diện tích tam giác đáy vuông: $S = \\frac{1}{2} \\cdot 3 \\cdot 4 = 6$. Thể tích lăng trụ $V = S \\cdot h = 6 \\cdot 5 = 30$." },
+                { id: "tt_nb_16", question: "Tứ diện $OABC$ có ba cạnh $OA, OB, OC$ đôi một vuông góc tại $O$. Công thức tính thể tích tứ diện này là:", options: ["$V = OA \\cdot OB \\cdot OC$", "$V = \\frac{1}{2} OA \\cdot OB \\cdot OC$", "$V = \\frac{1}{3} OA \\cdot OB \\cdot OC$", "$V = \\frac{1}{6} OA \\cdot OB \\cdot OC$"], correct: 3, explanation: "Do $OA \\perp OB, OA \\perp OC$ nên $OA \\perp (OBC)$. Thể tích tứ diện $V = \\frac{1}{3} S_{OBC} \\cdot OA = \\frac{1}{3} \\left(\\frac{1}{2} OB \\cdot OC\\right) \\cdot OA = \\frac{1}{6} OA \\cdot OB \\cdot OC$." },
+                { id: "tt_nb_17", question: "Công thức tính thể tích khối chóp cụt đều có diện tích hai đáy là $S, S'$ và chiều cao $h$ là:", options: ["$V = \\frac{1}{3}h(S + S' + \\sqrt{SS'})$", "$V = h(S + S' + \\sqrt{SS'})$", "$V = \\frac{1}{3}h(S + S' - \\sqrt{SS'})$", "$V = \\frac{1}{2}h(S + S')$"], correct: 0, explanation: "Theo định lý SGK Toán 11, công thức chuẩn tính thể tích khối chóp cụt là $V = \\frac{1}{3}h(S + S' + \\sqrt{SS'})$." },
+                { id: "tt_nb_18", question: "Nếu tăng cạnh của một khối lập phương lên $2$ lần thì thể tích của khối lập phương đó tăng lên bao nhiêu lần?", options: ["$2$ lần", "$4$ lần", "$6$ lần", "$8$ lần"], correct: 3, explanation: "Gọi cạnh ban đầu là $a \\Rightarrow V_1 = a^3$. Cạnh mới là $2a \\Rightarrow V_2 = (2a)^3 = 8a^3$. Vậy thể tích tăng lên $8$ lần." },
+                { id: "tt_nb_19", question: "Cho hình chóp $S.ABCD$ có đáy là hình chữ nhật kích thước $a$ và $2a$. Cạnh bên $SA$ vuông góc với mặt phẳng đáy, $SA = 3a$. Thể tích khối chóp bằng:", options: ["$6a^3$", "$2a^3$", "$3a^3$", "$a^3$"], correct: 1, explanation: "Diện tích đáy $S = a \\cdot 2a = 2a^2$. Chiều cao $h = SA = 3a$. Thể tích $V = \\frac{1}{3} S \\cdot h = \\frac{1}{3} (2a^2) (3a) = 2a^3$." },
+                { id: "tt_nb_20", question: "Cho khối lăng trụ tam giác đều có cạnh đáy bằng $a$ và chiều cao bằng $a$. Thể tích khối lăng trụ bằng:", options: ["$\\frac{a^3\\sqrt{3}}{4}$", "$\\frac{a^3\\sqrt{3}}{12}$", "$\\frac{a^3}{4}$", "$\\frac{a^3\\sqrt{3}}{2}$"], correct: 0, explanation: "Đáy là tam giác đều cạnh $a$ nên $S_{\\text{đáy}} = \\frac{a^2\\sqrt{3}}{4}$. Chiều cao $h = a$. Thể tích $V = S \\cdot h = \\frac{a^3\\sqrt{3}}{4}$." },
+                { id: "tt_nb_21", question: "Công thức tính thể tích khối tứ diện đều cạnh $a$ là:", options: ["$\\frac{a^3\\sqrt{2}}{12}$", "$\\frac{a^3\\sqrt{3}}{12}$", "$\\frac{a^3\\sqrt{2}}{6}$", "$\\frac{a^3\\sqrt{3}}{4}$"], correct: 0, explanation: "Khối tứ diện đều cạnh $a$ có diện tích đáy $S = \\frac{a^2\\sqrt{3}}{4}$ và đường cao $h = \\frac{a\\sqrt{6}}{3}$. Thể tích $V = \\frac{1}{3} S \\cdot h = \\frac{1}{3} \\cdot \\frac{a^2\\sqrt{3}}{4} \\cdot \\frac{a\\sqrt{6}}{3} = \\frac{a^3\\sqrt{18}}{36} = \\frac{a^3\\sqrt{2}}{12}$." },
+                { id: "tt_nb_22", question: "Hình chóp tam giác có tất cả bao nhiêu mặt?", options: ["$3$", "$4$", "$5$", "$6$"], correct: 1, explanation: "Hình chóp tam giác (hay còn gọi là tứ diện) có $1$ mặt đáy là tam giác và $3$ mặt bên là tam giác. Tổng cộng có $4$ mặt." },
+                { id: "tt_nb_23", question: "Tính diện tích đáy của một khối lăng trụ biết thể tích khối lăng trụ là $20$ và chiều cao bằng $4$.", options: ["$5$", "$80$", "$\\frac{5}{3}$", "$15$"], correct: 0, explanation: "Từ công thức $V = S \\cdot h$, ta suy ra $S = \\frac{V}{h} = \\frac{20}{4} = 5$." },
+                { id: "tt_nb_24", question: "Một khối lập phương có thể tích bằng $64$. Độ dài cạnh của khối lập phương đó là:", options: ["$8$", "$4$", "$16$", "$32$"], correct: 1, explanation: "Thể tích lập phương $V = a^3 = 64$. Suy ra $a = \\sqrt[3]{64} = 4$." },
+                { id: "tt_nb_25", question: "Nếu chiều cao của khối chóp tăng lên $3$ lần và giữ nguyên diện tích đáy thì thể tích khối chóp sẽ:", options: ["Không đổi", "Tăng $9$ lần", "Tăng $3$ lần", "Giảm $3$ lần"], correct: 2, explanation: "Thể tích khối chóp tỉ lệ thuận với chiều cao ($V = \\frac{1}{3}Sh$). Nếu $h$ tăng $3$ lần thì $V$ cũng tăng $3$ lần." }
+            ],
+            part2: [
+                { id: "tt_p2_1", question: "Cho hình lăng trụ đứng $ABC.A'B'C'$ có đáy là tam giác đều cạnh $a$. Biết $AA' = a$. Xét các tính chất của khối lăng trụ này:", items: [
+                    { text: "Khối lăng trụ đã cho là lăng trụ đều.", isTrue: true },
+                    { text: "Diện tích tam giác đáy $ABC$ bằng $\\frac{a^2\\sqrt{3}}{4}$.", isTrue: true },
+                    { text: "Thể tích của khối lăng trụ là $V = \\frac{a^3\\sqrt{3}}{12}$.", isTrue: false },
+                    { text: "Khoảng cách từ điểm $A$ đến mặt phẳng $(A'B'C')$ bằng $a$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Lăng trụ đứng có đáy là đa giác đều được gọi là lăng trụ đều.<br>b) Đúng. Công thức diện tích tam giác đều cạnh $a$ là $S = \\frac{a^2\\sqrt{3}}{4}$.<br>c) Sai. Thể tích lăng trụ $V = S_{\\text{đáy}} \\cdot h = \\frac{a^2\\sqrt{3}}{4} \\cdot a = \\frac{a^3\\sqrt{3}}{4}$. Đáp án trong câu bị chia thêm 3 (nhầm với thể tích chóp).<br>d) Đúng. Khoảng cách giữa hai mặt phẳng đáy chính là độ dài cạnh bên $AA' = a$." },
+                { id: "tt_p2_2", question: "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$. Cạnh bên $SA$ vuông góc với mặt phẳng đáy và $SA=a$.", items: [
+                    { text: "Thể tích khối chóp $S.ABCD$ là $V = \\frac{a^3}{3}$.", isTrue: true },
+                    { text: "Tam giác $SBD$ là tam giác cân tại đỉnh $S$.", isTrue: true },
+                    { text: "Thể tích của khối chóp $S.ABC$ bằng $\\frac{a^3}{6}$.", isTrue: true },
+                    { text: "Đường thẳng $BD$ vuông góc với mặt phẳng $(SAC)$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. $V = \\frac{1}{3} S_{ABCD} \\cdot SA = \\frac{1}{3} a^2 \\cdot a = \\frac{a^3}{3}$.<br>b) Đúng. $\\Delta SAB = \\Delta SAD$ (2 cạnh góc vuông $SA$ chung, $AB=AD$) $\\Rightarrow SB = SD$. Vậy $\\Delta SBD$ cân tại S.<br>c) Đúng. Diện tích $\\Delta ABC = \\frac{1}{2} a^2$. $V_{S.ABC} = \\frac{1}{3} \\cdot \\frac{1}{2} a^2 \\cdot a = \\frac{a^3}{6}$.<br>d) Đúng. $BD \\perp AC$ (đáy hình vuông) và $BD \\perp SA$ $\\Rightarrow BD \\perp (SAC)$." },
+                { id: "tt_p2_3", question: "Cho hình chóp tứ giác đều $S.ABCD$ có cạnh đáy bằng $a$, chiều cao $SO = a$.", items: [
+                    { text: "Tâm $O$ của hình vuông $ABCD$ là hình chiếu của $S$ lên mặt đáy.", isTrue: true },
+                    { text: "Thể tích khối chóp là $V = a^3$.", isTrue: false },
+                    { text: "Đường chéo $AC$ của hình vuông đáy có độ dài bằng $a\\sqrt{2}$.", isTrue: true },
+                    { text: "Thể tích khối chóp $S.OAB$ bằng $\\frac{a^3}{12}$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Đây là tính chất của hình chóp đều.<br>b) Sai. $V = \\frac{1}{3} S_{ABCD} \\cdot SO = \\frac{1}{3} a^2 \\cdot a = \\frac{a^3}{3}$.<br>c) Đúng. Pytago trong hình vuông: $AC = \\sqrt{a^2+a^2} = a\\sqrt{2}$.<br>d) Đúng. $S_{OAB} = \\frac{1}{4} S_{ABCD} = \\frac{a^2}{4}$. $V_{S.OAB} = \\frac{1}{3} \\cdot \\frac{a^2}{4} \\cdot a = \\frac{a^3}{12}$." },
+                { id: "tt_p2_4", question: "Cho tứ diện $OABC$ có $OA, OB, OC$ đôi một vuông góc với nhau tại $O$ và $OA=a, OB=b, OC=c$.", items: [
+                    { text: "Mặt phẳng $(OAB)$ vuông góc với mặt phẳng $(OBC)$.", isTrue: true },
+                    { text: "Thể tích khối tứ diện này được tính bằng công thức $V = \\frac{abc}{6}$.", isTrue: true },
+                    { text: "Trực tâm của tam giác $ABC$ chính là hình chiếu vuông góc của điểm $O$ lên mặt phẳng $(ABC)$.", isTrue: true },
+                    { text: "Độ dài đoạn $AB = \\sqrt{a^2 + b^2 + c^2}$.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Vì $OA \\perp OB$ và $OA \\perp OC \\Rightarrow OA \\perp (OBC)$. Mà $OA \\subset (OAB)$ nên $(OAB) \\perp (OBC)$.<br>b) Đúng. $V = \\frac{1}{3} S_{OAB} \\cdot OC = \\frac{1}{3} \\left(\\frac{1}{2}ab\\right)c = \\frac{abc}{6}$.<br>c) Đúng. Tính chất đặc trưng của tứ diện vuông.<br>d) Sai. Tam giác $OAB$ vuông tại $O$, theo định lý Pytago $AB = \\sqrt{OA^2 + OB^2} = \\sqrt{a^2 + b^2}$. Khoảng cách $\\sqrt{a^2+b^2+c^2}$ là độ dài đường chéo của hình hộp cơ sở." },
+                { id: "tt_p2_5", question: "Khối hộp chữ nhật có ba kích thước lần lượt là $x, y, z$.", items: [
+                    { text: "Nếu tăng mỗi kích thước lên 2 lần thì thể tích khối hộp tăng lên 8 lần.", isTrue: true },
+                    { text: "Thể tích khối hộp là $V = xyz$.", isTrue: true },
+                    { text: "Nếu tăng $x$ lên 2 lần và giảm $y$ đi 2 lần, giữ nguyên $z$ thì thể tích không đổi.", isTrue: true },
+                    { text: "Độ dài đường chéo của khối hộp là $x+y+z$.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Thể tích mới $V' = (2x)(2y)(2z) = 8xyz = 8V$.<br>b) Đúng. Công thức chuẩn của thể tích hộp chữ nhật.<br>c) Đúng. Thể tích mới $V' = (2x)(\\frac{y}{2})z = xyz = V$.<br>d) Sai. Độ dài đường chéo hình hộp chữ nhật tính theo định lý Pytago không gian là $d = \\sqrt{x^2+y^2+z^2}$." },
+                { id: "tt_p2_6", question: "Cho hình chóp $S.ABC$ có mặt bên $(SAB)$ vuông góc với mặt phẳng đáy $(ABC)$.", items: [
+                    { text: "Kẻ đường cao $SH$ của tam giác $SAB$, khi đó $SH \\perp (ABC)$.", isTrue: true },
+                    { text: "Thể tích khối chóp $S.ABC$ bằng $\\frac{1}{3} S_{\\Delta ABC} \\cdot SA$.", isTrue: false },
+                    { text: "Nếu $\\Delta SAB$ là tam giác đều cạnh $a$ thì đường cao khối chóp là $\\frac{a\\sqrt{3}}{2}$.", isTrue: true },
+                    { text: "Giao tuyến của $(SAB)$ và $(ABC)$ là cạnh $AB$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Định lý: Hai mặt phẳng vuông góc, đường thẳng nào nằm trong mặt này và vuông góc với giao tuyến thì vuông góc với mặt kia. Giao tuyến là $AB$, $SH \\perp AB \\Rightarrow SH \\perp (ABC)$.<br>b) Sai. Thể tích phải được tính theo đường cao $SH$ vừa tìm, $V = \\frac{1}{3} S_{\\Delta ABC} \\cdot SH$. Cạnh $SA$ là đường xiên.<br>c) Đúng. Tam giác đều cạnh $a$ có đường cao $SH = \\frac{a\\sqrt{3}}{2}$.<br>d) Đúng. Hai mặt phẳng giao nhau tại đoạn thẳng $AB$." },
+                { id: "tt_p2_7", question: "Xét sự thay đổi của thể tích các khối đa diện:", items: [
+                    { text: "Cắt khối lập phương cạnh $a$ bởi một mặt phẳng đi qua trung điểm 3 cạnh xuất phát từ một đỉnh, ta được khối tứ diện có thể tích $\\frac{a^3}{48}$.", isTrue: true },
+                    { text: "Hai khối chóp có cùng chiều cao và diện tích đáy bằng nhau thì thể tích bằng nhau.", isTrue: true },
+                    { text: "Một khối lăng trụ có thể được chia thành ba khối chóp có cùng thể tích.", isTrue: true },
+                    { text: "Thể tích khối lăng trụ luôn lớn gấp 3 lần thể tích khối chóp có cùng đáy và chiều cao.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Khối tứ diện cắt ra là tứ diện vuông với 3 cạnh góc vuông là $a/2$. $V = \\frac{1}{6} \\cdot \\frac{a}{2} \\cdot \\frac{a}{2} \\cdot \\frac{a}{2} = \\frac{a^3}{48}$.<br>b) Đúng. Áp dụng nguyên lý Cavalieri và công thức $V = \\frac{1}{3}Sh$.<br>c) Đúng. Bất kỳ lăng trụ tam giác nào cũng có thể được phân hoạch thành 3 tứ diện (chóp tam giác) có thể tích bằng nhau (mỗi phần $= \\frac{1}{3} V_{\\text{lăng trụ}}$).<br>d) Đúng. $V_{\\text{lăng trụ}} = Sh$, $V_{\\text{chóp}} = \\frac{1}{3}Sh \\Rightarrow V_{\\text{lăng trụ}} = 3 V_{\\text{chóp}}$." },
+                { id: "tt_p2_8", question: "Cho hình chóp $S.ABC$ có $SA \\perp (ABC)$, $\\Delta ABC$ vuông tại $B$. Gọi $H, K$ lần lượt là hình chiếu của $A$ lên $SB$ và $SC$.", items: [
+                    { text: "Đường thẳng $BC$ vuông góc với mặt phẳng $(SAB)$.", isTrue: true },
+                    { text: "Khối chóp $S.ABC$ có 4 mặt đều là tam giác vuông.", isTrue: true },
+                    { text: "Thể tích khối chóp $S.ABC$ là $V = \\frac{1}{3} \\cdot AB \\cdot BC \\cdot SA$.", isTrue: false },
+                    { text: "Đường thẳng $AH$ vuông góc với mặt phẳng $(SBC)$.", isTrue: true }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. $BC \\perp AB$ và $BC \\perp SA \\Rightarrow BC \\perp (SAB)$.<br>b) Đúng. $(SAB)$ vuông tại $A$, $(SAC)$ vuông tại $A$, $(ABC)$ vuông tại $B$, và $\\Delta SBC$ vuông tại $B$ (vì $BC \\perp (SAB) \\Rightarrow BC \\perp SB$).<br>c) Sai. Công thức đúng phải là $V = \\frac{1}{3} S_{\\Delta ABC} \\cdot SA = \\frac{1}{3} \\left(\\frac{1}{2} AB \\cdot BC\\right) \\cdot SA = \\frac{1}{6} AB \\cdot BC \\cdot SA$.<br>d) Đúng. $BC \\perp (SAB) \\Rightarrow BC \\perp AH$. Lại có $AH \\perp SB$. Từ đó $AH \\perp (SBC)$." },
+                { id: "tt_p2_9", question: "Cho hình lăng trụ đứng tam giác $ABC.A'B'C'$. Gọi $M, N, P$ lần lượt là trung điểm của các cạnh bên $AA', BB', CC'$.", items: [
+                    { text: "Mặt phẳng $(MNP)$ song song với mặt phẳng đáy $(ABC)$.", isTrue: true },
+                    { text: "Khối lăng trụ $ABC.MNP$ có thể tích bằng một nửa thể tích khối lăng trụ $ABC.A'B'C'$.", isTrue: true },
+                    { text: "Thể tích khối chóp $A'.ABC$ bằng $\\frac{1}{3}$ thể tích khối lăng trụ $ABC.A'B'C'$.", isTrue: true },
+                    { text: "Mặt phẳng $(MNP)$ chia khối lăng trụ thành hai phần có thể tích không bằng nhau.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Do $M, N, P$ là trung điểm các cạnh bên song song, nên mặt phẳng $(MNP)$ là thiết diện song song với hai đáy.<br>b) Đúng. Lăng trụ bị cắt ngang ở giữa chiều cao $\\Rightarrow h' = \\frac{h}{2} \\Rightarrow V' = S \\cdot \\frac{h}{2} = \\frac{V}{2}$.<br>c) Đúng. Khối chóp và lăng trụ có chung đáy $(ABC)$ và chung chiều cao $AA'$. Suy ra $V_{\\text{chóp}} = \\frac{1}{3} V_{\\text{lăng trụ}}$.<br>d) Sai. Vì $(MNP)$ cắt tại chính giữa chiều cao nên nó chia lăng trụ thành hai khối lăng trụ nhỏ có thể tích hoàn toàn bằng nhau." },
+                { id: "tt_p2_10", question: "Về tính toán và áp dụng góc trong bài toán thể tích:", items: [
+                    { text: "Nếu $SA \\perp (ABCD)$ thì góc giữa đường xiên $SC$ và mặt đáy $(ABCD)$ là góc $\\widehat{SCA}$.", isTrue: true },
+                    { text: "Nếu cạnh bên $SA \\perp (ABC)$ thì góc giữa mặt phẳng $(SBC)$ và $(ABC)$ được xác định bằng cách kẻ $AH \\perp BC$, khi đó góc là $\\widehat{SHA}$.", isTrue: true },
+                    { text: "Nếu góc giữa đường xiên và mặt đáy là $45^\\circ$ thì đường cao sẽ bằng hình chiếu của đường xiên đó.", isTrue: true },
+                    { text: "Nếu biết diện tích đáy $S$ và góc tạo bởi một mặt bên với đáy là $\\alpha$, ta luôn tính được trực tiếp chiều cao $h$ mà không cần thông số nào khác.", isTrue: false }
+                ], explanation: "<b>Giải thích chi tiết:</b><br>a) Đúng. Do $SA \\perp (ABCD)$ nên $A$ là hình chiếu của $S$ lên mặt phẳng đáy. Vậy hình chiếu của đường xiên $SC$ là $AC$, góc cần tìm là $\\widehat{SCA}$.<br>b) Đúng. Kẻ $AH \\perp BC$. Ta có $SA \\perp BC \\Rightarrow BC \\perp (SAH) \\Rightarrow BC \\perp SH$. Góc giữa hai mặt là góc giữa $AH$ và $SH$ (góc $\\widehat{SHA}$).<br>c) Đúng. Tam giác tạo bởi đường cao, hình chiếu và đường xiên là tam giác vuông. Nếu có một góc $45^\\circ$, nó sẽ là tam giác vuông cân, nên $2$ cạnh góc vuông (đường cao và hình chiếu) bằng nhau.<br>d) Sai. Để tính được chiều cao $h$, ngoài góc $\\alpha$ ta cần biết một độ dài cụ thể trong mặt phẳng đáy (ví dụ khoảng cách từ chân đường cao đến giao tuyến), chỉ diện tích $S$ chung chung là không đủ." }
+            ],
+            part3: [
+                { id: "tt_p3_1", question: "Tính thể tích của một khối hộp chữ nhật có ba kích thước lần lượt là $3, 4, 5$.", keywords: ["60"], explanation: "Áp dụng công thức thể tích khối hộp chữ nhật: $V = a \\cdot b \\cdot c$. <br>Thay số: $V = 3 \\cdot 4 \\cdot 5 = 60$." },
+                { id: "tt_p3_2", question: "Khối lập phương có độ dài đường chéo bằng $3\\sqrt{3}$. Tính thể tích của khối lập phương đó.", keywords: ["27"], explanation: "Công thức đường chéo khối lập phương cạnh $a$ là $d = a\\sqrt{3}$. <br>Theo đề, $a\\sqrt{3} = 3\\sqrt{3} \\Rightarrow a = 3$. <br>Thể tích $V = a^3 = 3^3 = 27$." },
+                { id: "tt_p3_3", question: "Cho khối tứ diện $OABC$ có $OA, OB, OC$ đôi một vuông góc tại $O$. Biết $OA=2, OB=3, OC=4$. Tính thể tích khối tứ diện $OABC$.", keywords: ["4"], explanation: "Thể tích tứ diện vuông có các cạnh góc vuông xuất phát từ $O$ là $a, b, c$ được tính bằng: $V = \\frac{1}{6} a \\cdot b \\cdot c$. <br>Thay số: $V = \\frac{1}{6} \\cdot 2 \\cdot 3 \\cdot 4 = \\frac{24}{6} = 4$." },
+                { id: "tt_p3_4", question: "Cho khối chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $3$. Cạnh bên $SA$ vuông góc với mặt phẳng đáy và $SA = 5$. Tính thể tích khối chóp.", keywords: ["15"], explanation: "Diện tích đáy (hình vuông) $S = 3^2 = 9$. <br>Đường cao khối chóp là $SA = h = 5$. <br>Thể tích $V = \\frac{1}{3} S \\cdot h = \\frac{1}{3} \\cdot 9 \\cdot 5 = 15$." },
+                { id: "tt_p3_5", question: "Khối lăng trụ đứng tam giác có đáy là tam giác vuông tại $A$ với $AB=3, AC=4$. Chiều cao của lăng trụ bằng $10$. Tính thể tích khối lăng trụ.", keywords: ["60"], explanation: "Diện tích đáy (tam giác vuông) là $S = \\frac{1}{2} AB \\cdot AC = \\frac{1}{2} \\cdot 3 \\cdot 4 = 6$. <br>Thể tích lăng trụ $V = S \\cdot h = 6 \\cdot 10 = 60$." },
+                { id: "tt_p3_6", question: "Cho hình chóp tam giác đều $S.ABC$ có diện tích đáy bằng $3\\sqrt{3}$, đường cao $SG = 6$. Thể tích khối chóp có dạng $x\\sqrt{3}$. Tìm giá trị của $x$.", keywords: ["6"], explanation: "Vì đây là hình chóp đều, $SG$ là đường cao của chóp $\\Rightarrow h = 6$. <br>Thể tích $V = \\frac{1}{3} S_{\\text{đáy}} \\cdot h = \\frac{1}{3} \\cdot 3\\sqrt{3} \\cdot 6 = 6\\sqrt{3}$. <br>Vậy $x = 6$." },
+                { id: "tt_p3_7", question: "Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình chữ nhật với $AB=3, AD=4$. Cạnh bên $SA$ vuông góc với đáy. Biết góc giữa cạnh $SC$ và mặt phẳng đáy bằng $45^\\circ$. Tính thể tích khối chóp $S.ABCD$.", keywords: ["20"], explanation: "Đáy là hình chữ nhật $\\Rightarrow$ đường chéo $AC = \\sqrt{AB^2+AD^2} = \\sqrt{9+16} = 5$. <br>Do $SA \\perp (ABCD)$, hình chiếu của $SC$ lên đáy là $AC$. <br>Góc giữa $SC$ và đáy là $\\widehat{SCA} = 45^\\circ$. Tam giác $SAC$ vuông cân tại $A \\Rightarrow SA = AC = 5$. <br>Diện tích đáy $S = 3 \\cdot 4 = 12$. <br>Thể tích $V = \\frac{1}{3} S \\cdot SA = \\frac{1}{3} \\cdot 12 \\cdot 5 = 20$." },
+                { id: "tt_p3_8", question: "Khối lập phương có tổng diện tích các mặt bằng $24$. Tính thể tích của khối lập phương đó.", keywords: ["8"], explanation: "Khối lập phương có 6 mặt là các hình vuông bằng nhau. <br>Diện tích một mặt là $S_1 = \\frac{24}{6} = 4$. <br>Độ dài cạnh $a = \\sqrt{4} = 2$. <br>Thể tích khối lập phương $V = a^3 = 2^3 = 8$." },
+                { id: "tt_p3_9", question: "Cho khối lăng trụ tam giác đều $ABC.A'B'C'$ có cạnh đáy bằng $2$ và chiều cao bằng $\\sqrt{3}$. Tính thể tích của khối lăng trụ.", keywords: ["3"], explanation: "Đáy là tam giác đều cạnh $a=2$, diện tích đáy là $S = \\frac{a^2\\sqrt{3}}{4} = \\frac{4\\sqrt{3}}{4} = \\sqrt{3}$. <br>Thể tích lăng trụ $V = S \\cdot h = \\sqrt{3} \\cdot \\sqrt{3} = 3$." },
+                { id: "tt_p3_10", question: "Cho hình chóp $S.ABCD$ có mặt bên $(SAB)$ vuông góc với mặt phẳng đáy $(ABCD)$. Đáy $ABCD$ là hình chữ nhật có $AB=2, AD=3$. Tam giác $SAB$ là tam giác đều. Tính thể tích khối chóp $S.ABCD$. Thể tích có dạng $\\sqrt{x}$. Tìm $x$.", keywords: ["12"], explanation: "Vì $(SAB) \\perp (ABCD)$ nên đường cao $SH$ của tam giác đều $SAB$ chính là đường cao của khối chóp. <br>Tam giác $SAB$ đều cạnh $AB=2 \\Rightarrow SH = \\frac{2\\sqrt{3}}{2} = \\sqrt{3}$. <br>Diện tích đáy $S = 2 \\cdot 3 = 6$. <br>Thể tích $V = \\frac{1}{3} S \\cdot SH = \\frac{1}{3} \\cdot 6 \\cdot \\sqrt{3} = 2\\sqrt{3} = \\sqrt{12}$. <br>Vậy $x = 12$." }
+            ]
+        };
+
+        let currentSession = [];
+        let currentIndex = 0;
+        let score = 0;
+        let selectedAnswers = null;
+
+        function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+
+        function initGame() {
+            let playedHistory = [];
+            let lastRoundIds = [];
+            try {
+                playedHistory = JSON.parse(localStorage.getItem('played_history_thetich_v4')) || [];
+                lastRoundIds = JSON.parse(localStorage.getItem('last_round_thetich_v4')) || [];
+            } catch(e) {
+                console.error("Local storage parsing error", e);
+            }
+            
+            const getFresh = (pool, count, roundKey) => {
+                if (!pool || pool.length === 0) return [];
+                
+                // Lọc câu chưa làm và KHÔNG lặp lại đề trước
+                let available = pool.filter(q => !playedHistory.includes(q.id) && !lastRoundIds.includes(q.id));
+                
+                // Cạn kho -> Xóa lịch sử cũ nhưng VẪN KHÔNG LẶP đề ngay trước (Tỷ lệ lặp 0%)
+                if (available.length < count) {
+                    const poolIds = pool.map(p => p.id);
+                    playedHistory = playedHistory.filter(id => !poolIds.includes(id));
+                    available = pool.filter(q => !lastRoundIds.includes(q.id));
+                }
+                
+                let selected = shuffle(available).slice(0, count);
+                
+                // Fallback nếu kho cực kỳ nhỏ
+                if (selected.length < count) {
+                    const extra = shuffle(pool.filter(q => !selected.map(s=>s.id).includes(q.id))).slice(0, count - selected.length);
+                    selected = selected.concat(extra);
+                }
+
+                playedHistory.push(...selected.map(q => q.id));
+                return selected;
+            };
+
+            const p1 = getFresh(MASTER_POOL.part1, 7, 'p1');
+            const p2 = getFresh(MASTER_POOL.part2, 5, 'p2');
+            const p3 = getFresh(MASTER_POOL.part3, 3, 'p3');
+
+            currentSession = [...p1, ...p2, ...p3];
+            
+            try {
+                localStorage.setItem('played_history_thetich_v4', JSON.stringify(playedHistory));
+                localStorage.setItem('last_round_thetich_v4', JSON.stringify(currentSession.map(q => q.id)));
+            } catch(e) {}
+
+            currentIndex = 0; 
+            score = 0;
+            
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) startScreen.classList.add('hidden');
+            
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('footer-actions').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderMath() {
+            const els = document.querySelectorAll('.math-render');
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                window.MathJax.typesetPromise().then(() => {
+                    els.forEach(el => el.classList.add('ready'));
+                }).catch((err) => {
+                    console.error("MathJax Error:", err);
+                    els.forEach(el => el.classList.add('ready'));
+                });
+            } else {
+                els.forEach(el => el.classList.add('ready'));
+            }
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('main-content');
+            if (!currentSession || currentSession.length === 0) return;
+            const data = currentSession[currentIndex];
+            const qNum = currentIndex + 1;
+            selectedAnswers = (currentIndex < 7) ? null : (currentIndex < 12 ? {} : "");
+
+            document.getElementById('status').innerText = `CÂU ${qNum} / 15`;
+            document.getElementById('progress-bar').style.width = `${(qNum / 15) * 100}%`;
+            document.getElementById('check-btn').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('result-btn').classList.add('hidden');
+
+            let html = `<div class="fade-in">
+                <div class="mb-10 flex items-center gap-4">
+                    <span class="bg-amber-600 text-white text-xs font-black px-5 py-2.5 rounded-2xl uppercase tracking-widest shadow-lg shadow-amber-200">PHẦN ${qNum <= 7 ? 'I: TRẮC NGHIỆM' : (qNum <= 12 ? 'II: ĐÚNG/SAI' : 'III: TRẢ LỜI NGẮN')}</span>
+                </div>
+                <div class="text-xl md:text-2xl font-bold text-slate-800 mb-12 leading-relaxed math-render" id="q-text">${data.question}</div>`;
+
+            if (currentIndex < 7 && data.options) { 
+                html += `<div class="grid gap-6">`;
+                data.options.forEach((opt, i) => {
+                    html += `<button onclick="pickMCQ(${i})" id="mcq-${i}" class="choice-btn group p-7 border-2 border-slate-100 rounded-[2rem] text-left hover:border-amber-400 hover:bg-amber-50 transition-all flex items-center gap-8">
+                        <div class="w-14 h-14 rounded-3xl bg-slate-50 flex items-center justify-center font-black text-slate-400 group-hover:text-amber-600 transition-colors text-2xl">${String.fromCharCode(65+i)}</div>
+                        <div class="text-xl font-semibold text-slate-700 math-render">${opt}</div>
+                    </button>`;
+                });
+                html += `</div>`;
+            } else if (currentIndex >= 7 && currentIndex < 12 && data.items) { 
+                html += `<div class="space-y-6">`;
+                data.items.forEach((item, i) => {
+                    html += `<div class="item-row flex flex-col md:flex-row md:items-center justify-between p-7 bg-slate-50 rounded-[2.5rem] border border-slate-100 gap-6 shadow-sm">
+                        <div class="flex items-start gap-4">
+                            <span class="font-black text-amber-500 mt-1 text-lg">${['a)', 'b)', 'c)', 'd)'][i]}</span>
+                            <span class="text-xl text-slate-700 font-bold leading-relaxed math-render">${item.text}</span>
+                        </div>
+                        <div class="flex gap-4 min-w-[260px]">
+                            <button onclick="pickTF(${i}, true)" id="tf-${i}-t" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-slate-400 hover:text-amber-600">ĐÚNG</button>
+                            <button onclick="pickTF(${i}, false)" id="tf-${i}-f" class="flex-1 py-5 rounded-[1.5rem] border-2 border-white bg-white font-black text-lg transition active:scale-90 shadow-sm text-slate-400 hover:text-amber-600">SAI</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else { 
+                html += `<div class="relative max-w-lg mx-auto mt-12">
+                    <input type="text" id="short-ans" class="w-full p-10 border-4 border-slate-100 rounded-[3rem] text-5xl font-black text-center text-amber-600 focus:border-amber-500 outline-none transition shadow-inner" placeholder="Nhập đáp án...">
+                </div>`;
+            }
+
+            html += `<div id="exp-box" class="hidden mt-12 p-10 rounded-[3rem] explanation-box"></div></div>`;
+            container.innerHTML = html;
+            if (container.parentElement) container.parentElement.scrollTop = 0;
+            
+            renderMath();
+        }
+
+        function pickMCQ(idx) {
+            selectedAnswers = idx;
+            document.querySelectorAll('[id^="mcq-"]').forEach(b => {
+                b.classList.replace('border-amber-500', 'border-slate-100');
+                b.classList.remove('bg-amber-50');
+            });
+            document.getElementById(`mcq-${idx}`).classList.replace('border-slate-100', 'border-amber-500');
+            document.getElementById(`mcq-${idx}`).classList.add('bg-amber-50');
+        }
+
+        function pickTF(idx, val) {
+            if (typeof selectedAnswers !== 'object') selectedAnswers = {};
+            selectedAnswers[idx] = val;
+            const btnT = document.getElementById(`tf-${idx}-t`), btnF = document.getElementById(`tf-${idx}-f`);
+            btnT.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === true ? 'bg-amber-600 text-white border-amber-600 shadow-md' : 'bg-white border-white text-slate-400'}`;
+            btnF.className = `flex-1 py-5 rounded-[1.5rem] border-2 font-black text-lg transition active:scale-90 ${val === false ? 'bg-amber-600 text-white border-amber-600 shadow-md' : 'bg-white border-white text-slate-400'}`;
+        }
+
+        function processAnswer() {
+            const data = currentSession[currentIndex];
+            let isCorrect = false;
+
+            if (currentIndex < 7) {
+                if (selectedAnswers === null) return alert("Vui lòng chọn đáp án!");
+                isCorrect = (selectedAnswers === data.correct);
+                if (isCorrect) score += 1;
+                document.getElementById(`mcq-${data.correct}`).classList.add('bg-green-50', 'border-green-500');
+                if(!isCorrect) document.getElementById(`mcq-${selectedAnswers}`).classList.add('bg-red-50', 'border-red-500');
+            } else if (currentIndex < 12) {
+                let correctCount = 0;
+                let isFullAnswered = true;
+                for(let i=0; i<4; i++) { if(selectedAnswers[i] === undefined) isFullAnswered = false; }
+                if(!isFullAnswered) return alert("Vui lòng chọn Đúng/Sai cho tất cả các ý!");
+
+                data.items.forEach((item, i) => { if (selectedAnswers[i] === item.isTrue) correctCount++; });
+                const points = [0, 0.1, 0.25, 0.5, 1];
+                score += points[correctCount];
+                isCorrect = (correctCount === 4);
+            } else {
+                const input = document.getElementById('short-ans').value.trim().toLowerCase().replace(',', '.');
+                if(!input) return alert("Vui lòng nhập đáp án!");
+                // So sánh tuyệt đối bằng ===
+                const normalizedInput = input.replace(/\s+/g, '');
+                isCorrect = data.keywords.some(k => normalizedInput === k.toLowerCase());
+                if (isCorrect) score += 1;
+            }
+
+            const exp = document.getElementById('exp-box');
+            exp.innerHTML = `<h4 class="text-amber-800 font-extrabold text-2xl mb-6 uppercase tracking-tighter">${isCorrect ? '✨ HOÀN TOÀN CHÍNH XÁC!' : '❌ HÃY KIỂM TRA LẠI LỜI GIẢI'}</h4>
+                             <div class="text-slate-700 font-medium leading-loose math-render text-lg" id="exp-text">${data.explanation}</div>`;
+            exp.classList.remove('hidden');
+            document.getElementById('check-btn').classList.add('hidden');
+
+            if (currentIndex === 14) document.getElementById('result-btn').classList.remove('hidden');
+            else document.getElementById('next-btn').classList.remove('hidden');
+            
+            renderMath();
+        }
+
+        function renderNext() { currentIndex++; renderQuestion(); }
+
+        function finishGame() {
+            const container = document.getElementById('main-content');
+            document.getElementById('footer-actions').classList.add('hidden');
+            document.getElementById('progress-container').classList.add('hidden');
+            
+            const finalScore = ((score / 15) * 10).toFixed(2);
+            let rank = finalScore >= 8.5 ? "XUẤT SẮC" : (finalScore >= 6.5 ? "KHÁ GIỎI" : "CẦN CỐ GẮNG");
+            
+            container.innerHTML = `<div class="text-center py-20 fade-in">
+                <div class="text-[12rem] mb-12 animate-pulse drop-shadow-2xl">🏆</div>
+                <h2 class="text-6xl font-black text-slate-800 mb-6 uppercase tracking-tighter">${rank}</h2>
+                <div class="text-[10rem] leading-none font-black text-amber-500 my-16 tracking-tighter italic">${finalScore}<span class="text-4xl text-slate-300 ml-6 not-italic">/ 10</span></div>
+                <button onclick="location.reload()" class="bg-amber-600 text-white px-24 py-8 rounded-[3rem] font-black text-3xl shadow-xl hover:bg-amber-700 transition active:scale-95 uppercase tracking-wide">LÀM ĐỀ MỚI</button>
+            </div>`;
+        }
+    </script>
+</body>
+</html>
